@@ -1,17 +1,17 @@
 from asterisk.ami import AMIClient , SimpleAction
 
 client = AMIClient(address="54.36.181.102", port=5038)
-client.login(username='manager' , secret="123456")
+client.login(username='manager' , secret='im')
 
-Trail = SimpleAction(
+action = SimpleAction(
     'Originate',
-    Channel = 'SIP/Test2/4321',
-    Exten='1234',
+    Channel = 'SIP/Admin',
+    Exten='4000',
     Priority=1,
-    Context='Test',
+    Context='Trial',
 )
 
-response = client.send_action(Trail)
+response = client.send_action(action)
 
 print(response)
 
