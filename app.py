@@ -1,6 +1,5 @@
 from pyami_asterisk import AMIClient
 
-
 def callback_originate(events):
     print(events)
 

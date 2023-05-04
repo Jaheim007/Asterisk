@@ -1,8 +1,8 @@
 import mysql.connector
-from asterisk.ami import AMIClient 
+from asterisk.ami import AMIClient, SimpleAction
 
 client = AMIClient(address="54.36.181.102", port=5038)
-client.login(username='manager' , secret='im')
+client.login(username='manager', secret='im')
                                                   
 mydb = mysql.connector.connect(
     host = "54.36.181.102", 
@@ -11,35 +11,49 @@ mydb = mysql.connector.connect(
     database = "UserAsterisk_db"
 )
 
-caller_id = "SIP/Admin"
+def callback_originate(events):
+    print(events)
+
+CellphoneID = "SIP/User"
 cursor = mydb.cursor()
-cursor.execute(f"SELECT CashAmount FROM Accounts WHERE caller_id='{caller_id}'")
+cursor.execute(f"SELECT CashAmount FROM Accounts WHERE CellphoneID='{CellphoneID}'")
 result = cursor.fetchone()
 
 if result is not None:
-    call_duration = result[0]
+    balance = result[0]
 else:
-    print("You're Broke")
+    print("You're not authrorized to make calls")
+    exit()
+
+balance = 4
+if balance > 0:
+    call_duration = balance / 2
+else:
+    print("You're broke")
     exit()
     
-action = {
-    'Action' : 'Originate', 
-    'Channel' : 'SIP/Admin',
-    'Context' : 'Trial',
-    'Exten' : '1234',
-    'Priority': '1',
-    'SetVar': f'CALL_TIMEOUT={int(call_duration*60)}'
+variables = {
+    'CALL_TIMEOUT': int(call_duration*60)
 }
 
+action = SimpleAction(
+    'Originate', 
+    Channel= "SIP/Admin",
+    Context= "Trial",
+    Exten= '4000',
+    variables = variables,
+    Priority=1
+)
+
 response = client.send_action(action)
-if response.is_error():
-    print(response.get_error())
-else:
-    print(f"Dialing {action['Channel']} with {int(call_duration*60)} seconds timeout")
+# if response.is_error():
+#     print(response.get_error())
+# else:
+#     print(f"Dialing SIP/Admin with {int(call_duration*60)} seconds timeout")
+
 
 # Disconnect from Asterisk Manager Interface
 client.logoff()
-client.close()
 
 # Close MySQL database connection
 mydb.close()
