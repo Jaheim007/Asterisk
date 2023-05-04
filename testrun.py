@@ -23,7 +23,7 @@ def mysqlconnector():
     except Exception as e:
         print(e)
     
-print(mysqlconnector())
+mysqlconnector()
     
     
     
