@@ -1,19 +1,20 @@
 from asterisk.ami import AMIClient , SimpleAction
 
 client = AMIClient(address="54.36.181.102", port=5038)
-client.login(username='manager' , secret='im')
+client.login(username='1024' , secret='1024')
+
+def callback_events(events):
+    print(events)
 
 action = SimpleAction(
     'Originate',
-    Channel = 'SIP/Admin',
+    Channel = 'SIP/101',
     Exten='4000',
     Priority=1,
-    Context='Trial',
+    Context='Tester',
 )
 
 response = client.send_action(action)
-
-print(response)
 
 client.logoff()
 

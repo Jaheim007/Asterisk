@@ -1,76 +1,54 @@
-import mysql.connector
-from asterisk.ami import AMIClient, SimpleAction
+import time
+import asterisk.manager
+import datetime
 
-client = AMIClient(address="54.36.181.102", port=5038)
-client.login(username='manager', secret='im')
-                                                  
-mydb = mysql.connector.connect(
-    host = "54.36.181.102", 
-    user = "Jaheim1",
-    password = "root",
-    database = "UserAsterisk_db"
-)
+ami = asterisk.manager.Manager()
 
-def callback_originate(events):
+ami.connect('54.36.181.102')
+
+login_asterisk = ami.login('1024', '1024')
+
+def get_event(events):
+    print(events.get('Event'))
+
+def callback_events(events):
     print(events)
-
-CellphoneID = "SIP/User"
-cursor = mydb.cursor()
-cursor.execute(f"SELECT CashAmount FROM Accounts WHERE CellphoneID='{CellphoneID}'")
-result = cursor.fetchone()
-
-if result is not None:
-    balance = result[0]
-else:
-    print("You're not authrorized to make calls")
-    exit()
-
-balance = 4
-if balance > 0:
-    call_duration = balance / 2
-else:
-    print("You're broke")
-    exit()
     
-variables = {
-    'CALL_TIMEOUT': int(call_duration*60)
-}
+current_timestamp = int(time.time())
+print(current_timestamp)
 
-action = SimpleAction(
-    'Originate', 
-    Channel= "SIP/Admin",
-    Context= "Trial",
-    Exten= '4000',
-    variables = variables,
-    Priority=1
-)
+absolute_timeout = current_timestamp + 30
 
-response = client.send_action(action)
-# if response.is_error():
-#     print(response.get_error())
-# else:
-#     print(f"Dialing SIP/Admin with {int(call_duration*60)} seconds timeout")
+dt = datetime.datetime.fromtimestamp(absolute_timeout)
 
+print(absolute_timeout)
 
-# Disconnect from Asterisk Manager Interface
-client.logoff()
+print(dt)
 
-# Close MySQL database connection
-mydb.close()
-
-
-#Cursor Point Connection
-# mycursor = mydb.cursor()
-
-# #Read Items in the Table 
-# mycursor.execute("SELECT * FROM Accounts")
-# myresults = mycursor.fetchall()
-
-
-# for item in myresults:
-#     print(item)
+# try:
+while True:
+    action = {
+        'Action': 'Originate',
+        'Channel' : 'SIP/202',
+        'Context' : 'Tester',
+        'Exten' : '7000',
+        'Priority' : '1', 
+        'Timeout' : '30000',
+        'AbsoluteTimeout': str(absolute_timeout)
+    }
     
-    
-    
-    
-        
+    callback_events(action)
+    response = ami.send_action(action)
+    get_event(response)
+    print(response)
+
+    # if response == "Success":
+    #     if current_timestamp >= absolute_timeout:
+    #         hangup_action = {
+    #             'Action': 'Hangup',
+    #             'Channel': 'SIP/101'  # Replace with the appropriate channel of the active call
+    #         }
+    #         response = ami.send_action(hangup_action)
+            
+# except TypeError:
+#     print("Its gets out of the try")
