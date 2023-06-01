@@ -40,3 +40,7 @@ ami.create_action(
 ami.register_event(["*"], all_events)
 
 ami.connect()
+
+
+
+
