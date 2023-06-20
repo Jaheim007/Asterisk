@@ -2,54 +2,50 @@ import mysql.connector
 from pyami_asterisk import AMIClient
 
 mydb = mysql.connector.connect(
-    host = "54.36.181.102", 
+    host = "54.36.181.102",
     user = "Jaheim",
     password = "password",
     database = "asterisk_call"
 )
 
-Username = "Docker"
+Db_name = "Docker"
 cursor = mydb.cursor()
-cursor.execute(f"SELECT Balance FROM Dialplan WHERE Name='{Username}'")
+cursor.execute(f"SELECT Balance FROM Dialplan Where Name='{Db_name}'")
 result = cursor.fetchone()
 
 if result is not None:
     balance = result[0]
+    
 else:
-    print("You're not authrorized to make calls")
-    exit()
+    print("You don't have a value in the db.")
     
 caller_balance = balance
-print(type(caller_balance))
+print(caller_balance)
 
-amount = int(caller_balance)
-print(type(amount))
+value_per_minute = 50 * 60
 
-call_duration = str(amount * 60)
-print(call_duration)
-print(type(call_duration))
+value_duration = value_per_minute
+print(value_duration)
+
+call_limit = str(caller_balance / 50)
+print(call_limit)
 
 def all_events(events):
     if events.get('Event') == "BridgeEnter":
         ami.create_action({
             "Action":"AbsoluteTimeout",
             "Channel": events.get('Channel'),
-            "Timeout" : call_duration
-        },callback_originate
+            "Timeout" : call_limit
+        }, callback_originate
     )
-
+        
 def callback_originate(events):
     print(events)
     
 def get_event(events):
-    if events.get('Event') == "BridgeEnter":
-        ami.create_action({
-            "Action":"AbsoluteTimout",
-            "Channel" : 'Channel',
-            "Timeout" : "5"
-        },callback_originate
-    )
-
+    if events.get("Event") == "Cdr":
+        print(events)
+    
 ami = AMIClient(host='54.36.181.102', port=5038, username='Nan' , secret='nan')
 
 ami.create_action(
@@ -66,10 +62,8 @@ ami.create_action(
 )
 
 ami.register_event(["*"], all_events)
+ami.register_event(["*"], get_event)
+
+mydb.close()
 
 ami.connect()
-
-"""
-    The database was called Asterisk and the table was called Callers
-    the contents of the table are PersonID, Balance and Name
-"""
